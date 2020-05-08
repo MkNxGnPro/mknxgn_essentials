@@ -18,6 +18,7 @@ Includes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reading JSON files.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Writing 'Soft' encryption files<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Reading 'Soft' encryption files<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tar Decompressing<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Generating Files of X size in MB<br>
 
 ``` python

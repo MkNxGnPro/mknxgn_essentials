@@ -8,9 +8,9 @@ def Get_IP():
     for inface in netifaces.interfaces():
         try:
             ip = netifaces.ifaddresses(inface)[netifaces.AF_INET][0]['addr']
-            if "127" == ip[:2]:
+            if "127" == ip[:3]:
                 ips['local'].append(ip)
-            elif "169" == ip[:2]:
+            elif "169" == ip[:3]:
                 ips['local'].append(ip)
             else:
                 ips['ext'].append(ip)

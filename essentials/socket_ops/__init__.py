@@ -267,7 +267,7 @@ class Socket_Server_Client:
 
     def __init__(self, sock, addr, conID, on_data, on_question, on_close, Heart_Beat=True, Heart_Beat_Wait=20):
         """CLIENT for Socket_Server_Host"""
-        self.socket = socket
+        self.socket = sock
         self.addr = addr
         self.conID = conID
         self.on_data = on_data

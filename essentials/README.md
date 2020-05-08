@@ -11,40 +11,49 @@ Functions in this document will be staying here until futher notice.
 
 # What's Inside
 
+
+### <b>ShrinkLink(long_url)</b> <span style="color:red">Requires an Internet Connection</span><br>
+```
+    Shrink a Link via Python and MkNxGn
+    Uses MkNxGn's Free Link Shrinking API
+    takes a long url and return a mkls.in short link
+
+    Example:
+    https://github.com/MkNxGnPro/mknxgn_essentials/tree/master/essentials
+
+    Returns:
+    https://mkls.in/zXC
+```
+
+### <b>SortDictOfDict(Dict, key, reverseOrder=False)</b>
+```
+    Sort Dictionary of Dictionaries
+
+    Parses a dictionary of containing dictionarys, returns it in order based off the keyname you provide.
+
+    Example:
+```
 ``` python
-ShrinkLink(long_link)
-"""
-Shrink a Link via Python and MkNxGn
+unsorted = { 'c': {'time_stamp': 150}, 'a': {'time_stamp': 100}, 'b': {'time_stamp': 50}}
+key = 'time_stamp'  # The key you want to sort by
+reverseOrder = True # Accending Order
 
-** Requires an Internet Connection **
-
-Uses MkNxGn's Free Link Shrinking API
-
-takes a (long) url and return a mkls.in short link
-"""
-
-SortDictOfDict(Dict, key, reverseOrder=False)
-"""
-Sort Dictionary of Dictionaries
-
-will parse a dictionary of dictionarys returning it in order based off the keyname you provide
-
-dict = { 'c': {'time_stamp': 150}, 'a': {'time_stamp': 100}, 'b': {'time_stamp': 50}}
-key = 'time_stamp'
-reverseOrder = True
-
+essentials.SortDictOfDict(unsorted, key)
 >> {'b': {'time_stamp': 50}, 'a': {'time_stamp': '100'}, 'c': {'time_stamp': 150}}
-"""
+```
 
-DictToArgs(Dict)
-"""
-Dictionary to URL Args
+### <b>DictToArgs(Dict)</b>
+```
+    Dictionary to URL Args
+    Give a dictionary of keys and values to convert it to a url applyable string
 
-Give a dictionary of keys and values to convert it to a url applyable string
+    Example:
+```
+``` python
+keys = {'a': 'val', 'b': 'val2'}
+essentials.DictToArgs(keys)
 
-{'a': 'val', 'b': 'val2'} >> ?a=val&b=val2
-"""
-
+>> "?a=val&b=val2"
 
 ```
 

@@ -4,14 +4,19 @@ import time
 import threading
 
 def Get_IP():
+    ips = {"ext": [], "local": []}
     for inface in netifaces.interfaces():
         try:
             ip = netifaces.ifaddresses(inface)[netifaces.AF_INET][0]['addr']
-            if "127" in ip:
-                pass
-            return ip
+            if "127" == ip[:2]:
+                ips['local'].append(ip)
+            elif "169" == ip[:2]:
+                ips['local'].append(ip)
+            else:
+                ips['ext'].append(ip)
         except:
             pass
+    return ips
 
 def Get_GW():
     gateways = netifaces.gateways()

@@ -530,6 +530,7 @@ class Socket_Connector:
         """
         self.running = False
         self.on_connection_close(self)
+        print("SD")
         try:
             self.socket.shutdown(socket.SHUT_RDWR)
         except:

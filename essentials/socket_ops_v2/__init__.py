@@ -797,3 +797,69 @@ class Socket_Connector:
                     else:
                         threading.Thread(target=self.configuration.on_data_recv, args=[socket_message], daemon=True).start()
                 time.sleep(0.01)
+
+class UDP_Server_Client(object):
+    def __init__(self, addr, on_data, server):
+        self.on_data = on_data
+        self.addr = addr
+        self.server = server
+        self.meta = {}
+
+    def __attemp_data_delivery__(self, data):
+        def _attempt_():
+            try:
+                self.on_data(data)
+            except:
+                pass
+        threading.Thread(target=_attempt_, daemon=True).start()
+
+    def send(self, data):
+        self.server.sendto(data, self.addr)
+
+class UDP_Server(object):
+
+    def __init__(self, HOST, PORT, on_new_client=None, on_data=None, timeout=1):
+        self.clients = {}
+        server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        server.bind((HOST, PORT))
+        server.settimeout(timeout)
+        self.on_data = on_data
+        self.on_new_client = on_new_client
+
+        def data_recv():
+            while True:
+                try:
+                    data, address = server.recvfrom(1024)
+                except:
+                    continue
+                client_ad = ":".join([str(address[0]), str(address[1])])
+                if client_ad not in self.clients:
+                    self.clients[client_ad] = UDP_Server_Client(address, self.on_data, server)
+                    threading.Thread(target=self.on_new_client, daemon=True, args=[self.clients[client_ad]]).start()
+                self.clients[client_ad].__attemp_data_delivery__(data)
+                
+
+        threading.Thread(target=data_recv, daemon=True).start()
+
+class UDP_Connector(object):
+
+    def __init__(self, HOST, PORT, on_data=None, timeout=1):
+        self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        print("connecting to", HOST, PORT)
+        self.address = (HOST, PORT)
+        self.clientSocket.settimeout(timeout)
+        self.on_data = on_data
+
+        def data_recv():
+            while True:
+                try:
+                    data, address = self.clientSocket.recvfrom(1024)
+                except Exception as e:
+                    continue
+                if self.on_data != None:
+                    threading.Thread(target=self.on_data, daemon=True, args=[data]).start()
+
+        threading.Thread(target=data_recv, daemon=True).start()
+
+    def send(self, data):
+        self.clientSocket.sendto(data, self.address)

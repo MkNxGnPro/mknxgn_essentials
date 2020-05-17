@@ -818,18 +818,19 @@ class UDP_Server_Client(object):
 
 class UDP_Server(object):
 
-    def __init__(self, HOST, PORT, on_new_client=None, on_data=None, timeout=1):
+    def __init__(self, HOST, PORT, on_new_client=None, on_data=None, timeout=1, max_buffer=1024):
         self.clients = {}
         server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server.bind((HOST, PORT))
         server.settimeout(timeout)
         self.on_data = on_data
+        self.max_buffer = max_buffer
         self.on_new_client = on_new_client
 
         def data_recv():
             while True:
                 try:
-                    data, address = server.recvfrom(1024)
+                    data, address = server.recvfrom(self.max_buffer)
                 except:
                     continue
                 client_ad = ":".join([str(address[0]), str(address[1])])
@@ -843,17 +844,18 @@ class UDP_Server(object):
 
 class UDP_Connector(object):
 
-    def __init__(self, HOST, PORT, on_data=None, timeout=1):
+    def __init__(self, HOST, PORT, on_data=None, timeout=1, max_buffer=1024):
         self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         print("connecting to", HOST, PORT)
         self.address = (HOST, PORT)
         self.clientSocket.settimeout(timeout)
+        self.max_buffer = max_buffer
         self.on_data = on_data
 
         def data_recv():
             while True:
                 try:
-                    data, address = self.clientSocket.recvfrom(1024)
+                    data, address = self.clientSocket.recvfrom(self.max_buffer)
                 except Exception as e:
                     continue
                 if self.on_data != None:

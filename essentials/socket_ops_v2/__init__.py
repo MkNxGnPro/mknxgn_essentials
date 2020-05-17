@@ -841,6 +841,23 @@ class UDP_Server(object):
                 
 
         threading.Thread(target=data_recv, daemon=True).start()
+    
+    def shutdown(self):
+        """
+        Shuts down this connection.
+
+        :rtype: None
+
+        """
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except:
+            pass
+        try:
+            self.socket.close()
+        except:
+            pass
+
 
 class UDP_Connector(object):
 

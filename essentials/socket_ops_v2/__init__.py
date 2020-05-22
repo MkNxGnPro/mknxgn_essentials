@@ -808,7 +808,7 @@ class UDP_Server_Client(object):
     def __attemp_data_delivery__(self, data):
         def _attempt_():
             try:
-                self.on_data(data)
+                self.on_data(data, self)
             except:
                 pass
         threading.Thread(target=_attempt_, daemon=True).start()
@@ -821,6 +821,7 @@ class UDP_Server(object):
     def __init__(self, HOST, PORT, on_new_client=None, on_data=None, timeout=1, max_buffer=1024):
         self.clients = {}
         server = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server.bind((HOST, PORT))
         server.settimeout(timeout)
         self.on_data = on_data

@@ -244,7 +244,7 @@ class Socket_Server_Host:
                     conn.close()
                     return
                 conID = tokening.CreateToken(12, self.connections)
-                connector = Socket_Server_Client(conn, addr, conID, self.on_connection_open, self.on_data_recv, on_question=self.on_question, on_close=self.close_connection, Heart_Beat=self.heart_beats, Heart_Beat_Wait=self.heart_beat_wait, legacy_buffer_size=self.legacy_buffer_size)
+                connector = Socket_Server_Client(conn, addr, self, conID, self.on_connection_open, self.on_data_recv, on_question=self.on_question, on_close=self.close_connection, Heart_Beat=self.heart_beats, Heart_Beat_Wait=self.heart_beat_wait, legacy_buffer_size=self.legacy_buffer_size)
                 self.connections[conID] = connector
                 time.sleep(0.05)
             except Exception as e:
@@ -297,10 +297,11 @@ class Socket_Server_Host:
 
 class Socket_Server_Client:
 
-    def __init__(self, sock, addr, conID, on_connection_open, on_data, on_question, on_close, Heart_Beat=True, Heart_Beat_Wait=20, legacy_buffer_size=1024):
+    def __init__(self, sock, addr, server, conID, on_connection_open, on_data, on_question, on_close, Heart_Beat=True, Heart_Beat_Wait=20, legacy_buffer_size=1024):
         """CLIENT for Socket_Server_Host"""
         self.socket = sock
         self.addr = addr
+        self.server = server
         self.conID = conID
         self.on_data = on_data
         self.on_close = on_close

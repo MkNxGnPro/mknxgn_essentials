@@ -1,4 +1,5 @@
 import json, base64, os
+import tarfile
 
 workingDir = False
 
@@ -136,7 +137,7 @@ def generate_file(path, size=1):
     write_file(path, ("test_file_"*104859)*size)
 
 def DecompressTar(file, dirs=False):
-    if not tar:
+    if not tarfile:
         raise ImportError("TAR was not found during boot, Install TAR to use this function")
     if workingDir != False:
         file = os.path.join(workingDir, file)
@@ -146,3 +147,16 @@ def DecompressTar(file, dirs=False):
     os.makedirs(dirs, exist_ok=True)
     tfile.extractall(dirs)
     return dirs
+
+def write_csv(path, data):
+    strs = ""
+    for item in data:
+        items = []
+        for x in item:
+            if ',' in x:
+                items.append('"' + str(x) + '"')
+            else:
+                items.append(str(x))
+        strs += ",".join(items)
+        strs += "\n"
+    write_file(path, strs)

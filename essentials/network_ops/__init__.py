@@ -18,6 +18,33 @@ def Get_IP():
             pass
     return ips
 
+def Get_IP_with_MAC():
+    ips = {"ext": [], "local": []}
+    for inface in netifaces.interfaces():
+        try:
+            ip = netifaces.ifaddresses(inface)[netifaces.AF_INET][0]['addr']
+            if "127" == ip[:3]:
+                ips['local'].append({"ip": ip, "mac": IP_to_MAC(ip)})
+            elif "169" == ip[:3]:
+                ips['local'].append({"ip": ip, "mac": IP_to_MAC(ip)})
+            else:
+                ips['ext'].append({"ip": ip, "mac": IP_to_MAC(ip)})
+        except:
+            pass
+    return ips
+
+def IP_to_MAC(ip):
+    for i in netifaces.interfaces():
+        addrs = netifaces.ifaddresses(i)
+        try:
+            if_mac = addrs[netifaces.AF_LINK][0]['addr']
+            if_ip = addrs[netifaces.AF_INET][0]['addr']
+        except:
+            if_mac = if_ip = None
+        if if_ip == ip:
+            return if_mac
+    return None
+
 def Get_GW():
     gateways = netifaces.gateways()
     return gateways['default'][netifaces.AF_INET][0]

@@ -159,7 +159,7 @@ class Data_Storage(object):
         return self.megabytes * 0.001
 
 class Socket_Server_Host:
-    def __init__(self, HOST, PORT, on_connection_open, on_data_recv, on_question, on_connection_close=False, daemon=True, autorun=True, connections=5, SO_REUSEADDR=True, heart_beats=True, heart_beat_wait=20, legacy_buffer_size=1024):
+    def __init__(self, HOST, PORT, on_connection_open, on_data_recv, on_question, on_connection_close=False, daemon=True, autorun=True, connections=5, SO_REUSEADDR=True, heart_beats=True, heart_beat_wait=20, legacy_buffer_size=1024, PYTHONIC_only=False):
         """Host your own Socket server to allows connections to this computer.
 
         Parameters
@@ -206,6 +206,7 @@ class Socket_Server_Host:
         self.connections = {}
         self.on_question = on_question
         self.running = False
+        self.PYTHONIC_only = PYTHONIC_only
         self.legacy_buffer_size = legacy_buffer_size
         if autorun:
             self.Run(connections, daemon, SO_REUSEADDR)
@@ -244,7 +245,7 @@ class Socket_Server_Host:
                     conn.close()
                     return
                 conID = tokening.CreateToken(12, self.connections)
-                connector = Socket_Server_Client(conn, addr, self, conID, self.on_connection_open, self.on_data_recv, on_question=self.on_question, on_close=self.close_connection, Heart_Beat=self.heart_beats, Heart_Beat_Wait=self.heart_beat_wait, legacy_buffer_size=self.legacy_buffer_size)
+                connector = Socket_Server_Client(conn, addr, self, conID, self.on_connection_open, self.on_data_recv, on_question=self.on_question, on_close=self.close_connection, Heart_Beat=self.heart_beats, Heart_Beat_Wait=self.heart_beat_wait, legacy_buffer_size=self.legacy_buffer_size, PYTHONIC_only=self.PYTHONIC_only)
                 self.connections[conID] = connector
                 time.sleep(0.05)
             except Exception as e:
@@ -297,7 +298,7 @@ class Socket_Server_Host:
 
 class Socket_Server_Client:
 
-    def __init__(self, sock, addr, server, conID, on_connection_open, on_data, on_question, on_close, Heart_Beat=True, Heart_Beat_Wait=20, legacy_buffer_size=1024):
+    def __init__(self, sock, addr, server, conID, on_connection_open, on_data, on_question, on_close, Heart_Beat=True, Heart_Beat_Wait=20, legacy_buffer_size=1024, PYTHONIC_only=False):
         """CLIENT for Socket_Server_Host"""
         self.socket = sock
         self.addr = addr
@@ -317,7 +318,16 @@ class Socket_Server_Client:
         self.created = essentials.TimeStamp()
         self.heart_beat_wait = Heart_Beat_Wait
         self.heart_beat = Heart_Beat
-        threading.Thread(target=self.__detect_client_type__, args=[on_connection_open]).start()
+        self.PYTHONIC_only = PYTHONIC_only
+        if PYTHONIC_only:
+            self.client_type = PYTHONIC
+            threading.Thread(target=on_connection_open, args=[self]).start()
+            threading.Thread(target=self.__data_rev__, daemon=True).start()
+            if self.heart_beat == True:
+                self.socket.setblocking(1)
+                threading.Thread(target=self.__heart_beat__, daemon=True).start()
+        else:
+            threading.Thread(target=self.__detect_client_type__, args=[on_connection_open]).start()
 
     def __detect_client_type__(self, on_open):
         self.socket.settimeout(2)
@@ -364,9 +374,9 @@ class Socket_Server_Client:
             self.socket.settimeout(0.075)
             self.client_type = LEGACY
 
-        threading.Thread(target=on_open, args=[self]).start()
-
+        threading.Thread(target=on_open, args=[self], daemon=True).start()
         threading.Thread(target=self.__data_rev__, daemon=True).start()
+
         if self.heart_beat == True and self.client_type == PYTHONIC:
             self.socket.setblocking(1)
             threading.Thread(target=self.__heart_beat__, daemon=True).start()

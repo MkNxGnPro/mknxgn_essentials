@@ -570,6 +570,7 @@ class Configuration(object):
         self.on_data_recv = on_data_recv
         self.on_question = on_question
         self.on_connection_close = on_connection_close
+        self.server_PYTHONIC_only = False
 
     @property
     def PYTHONIC(self):
@@ -654,7 +655,8 @@ class Socket_Connector:
         self.socket = ConnectorSocket(self.HOST, self.PORT)
         if self.configuration.PYTHONIC == True:
             self.send({"pythonic": True})
-            time.sleep(2)
+            if self.configuration.server_PYTHONIC_only == False:
+                time.sleep(2)
             if self.configuration.heart_beat == True:
                 threading.Thread(target=self.__heart_beat__, daemon=True).start()
         elif self.configuration.WEBONIC == True:

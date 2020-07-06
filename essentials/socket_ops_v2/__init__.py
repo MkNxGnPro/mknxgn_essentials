@@ -100,11 +100,12 @@ def HostServer(HOST, PORT, connections=5, SO_REUSEADDR=True):
     sock.listen(connections)
     return sock
 
-def ConnectorSocket(HOST, PORT):
+def ConnectorSocket(HOST, PORT, timeout=5):
     """
         Helper function for Socket Classes
     """
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    clientsocket.settimeout(timeout)
     clientsocket.connect((HOST, PORT))
     return  clientsocket
 
@@ -649,10 +650,10 @@ class Socket_Connector:
             raise TimeoutError("No response in time.")
         return self.get_next_data
         
-    def connect(self):
+    def connect(self, timeout=5):
         if self.configuration.WEBONIC:
             raise NotImplementedError("Websocket Clients Haven't been Implemented Yet.")
-        self.socket = ConnectorSocket(self.HOST, self.PORT)
+        self.socket = ConnectorSocket(self.HOST, self.PORT, timeout)
         if self.configuration.PYTHONIC == True:
             self.send({"pythonic": True})
             if self.configuration.server_PYTHONIC_only == False:

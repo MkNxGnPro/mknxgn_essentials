@@ -878,7 +878,6 @@ class UDP_Connector(object):
 
     def __init__(self, HOST, PORT, on_data=None, timeout=1, max_buffer=1024):
         self.clientSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        print("connecting to", HOST, PORT)
         self.address = (HOST, PORT)
         self.clientSocket.settimeout(timeout)
         self.max_buffer = max_buffer
@@ -891,7 +890,7 @@ class UDP_Connector(object):
                 except Exception as e:
                     continue
                 if self.on_data != None:
-                    threading.Thread(target=self.on_data, daemon=True, args=[data]).start()
+                    threading.Thread(target=self.on_data, daemon=True, args=[data, address]).start()
 
         threading.Thread(target=data_recv, daemon=True).start()
 

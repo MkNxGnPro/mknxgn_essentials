@@ -762,8 +762,7 @@ class Socket_Connector:
                     data, temp = SocketDownload(self.socket, self.recv_data, self.data_usage.received)
                     self.recv_data = temp
                 except:
-                    self.shutdown()
-                    return
+                    continue
                 if type(data) == type({}) and 'heart_beat_function' in data:
                     pass
                 elif type(data) == type({}) and 'function_ask_response' in data:

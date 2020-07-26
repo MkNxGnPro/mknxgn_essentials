@@ -18,6 +18,22 @@ def Get_IP():
             pass
     return ips
 
+def Get_All_IP_Stat():
+    ips = {"ext": [], "local": []}
+    for inface in netifaces.interfaces():
+        try:
+            ip = netifaces.ifaddresses(inface)[netifaces.AF_INET][0]
+            ip['mac'] = IP_to_MAC(ip['addr'])
+            if "127" == ip['addr'][:3]:
+                ips['local'].append(ip)
+            elif "169" == ip['addr'][:3]:
+                ips['local'].append(ip)
+            else:
+                ips['ext'].append(ip)
+        except:
+            pass
+    return ips
+
 def Get_IP_with_MAC():
     ips = {"ext": [], "local": []}
     for inface in netifaces.interfaces():

@@ -10,6 +10,32 @@ EVERY_WEEK = "week"
 EVERY_MONTH = "month"
 EVERY_YEAR = "year"
 
+SECOND = "second"
+MINUTE = "minute"
+HOUR = "hour"
+DAY = "day"
+
+def wait_X_Y_and_do(count, function=None, unit_type=SECOND, keep_open=False):
+
+    def wait(function, count, unit_type):
+        if unit_type == SECOND:
+            pass
+        elif unit_type == MINUTE:
+            count = count * 60
+        elif unit_type == HOUR:
+            count = count * 3600
+        elif unit_type == DAY:
+            count = count * 86400
+        else:
+            raise ValueError("You didn't pass a comprehendable unit_type")
+
+        time.sleep(count)
+
+        function()
+
+    threading.Thread(target=wait, args=[function, count, unit_type], daemon=not keep_open).start()
+
+
 class EventListener:
     def __init__(self, viaDate=True):
         self.events = {}
@@ -121,3 +147,4 @@ class Event:
     def run(self, calling_type):
         self.runs += 1
         threading.Thread(target=self.action, args=[calling_type, datetime.datetime.now()], daemon=True).start()
+        

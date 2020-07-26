@@ -15,9 +15,9 @@ MINUTE = "minute"
 HOUR = "hour"
 DAY = "day"
 
-def wait_X_Y_and_do(count, function=None, unit_type=SECOND, keep_open=False):
+def wait_X_Y_and_do(count, function=None, unit_type=SECOND, args=None, keep_open=False):
 
-    def wait(function, count, unit_type):
+    def wait(function, count, unit_type, args):
         if unit_type == SECOND:
             pass
         elif unit_type == MINUTE:
@@ -31,9 +31,9 @@ def wait_X_Y_and_do(count, function=None, unit_type=SECOND, keep_open=False):
 
         time.sleep(count)
 
-        function()
+        function(*args)
 
-    threading.Thread(target=wait, args=[function, count, unit_type], daemon=not keep_open).start()
+    threading.Thread(target=wait, args=[function, count, unit_type, args], daemon=not keep_open).start()
 
 
 class EventListener:

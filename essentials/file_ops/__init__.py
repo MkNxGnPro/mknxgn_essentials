@@ -160,3 +160,23 @@ def write_csv(path, data):
         strs += ",".join(items)
         strs += "\n"
     write_file(path, strs)
+
+class Updating_Dict_File(dict):
+
+    def __init__(self, path):
+        self.path = path
+        data = __biz_File__(path)
+        for item in data:
+            self.__setitem__(item, data[item], False)
+
+    def __save_on_change__(self):
+        time.sleep(0.5)
+        __biz_File__(self.path, self)
+
+    def __setattr__(self, name, value):
+        return super().__setattr__(name, value)
+
+    def __setitem__(self, key, value, save=True):
+        if save:
+            threading.Thread(target=self.__save_on_change__).start()
+        return super().__setitem__(key, value)

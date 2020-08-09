@@ -31,7 +31,10 @@ def wait_X_Y_and_do(count, function=None, unit_type=SECOND, args=None, keep_open
 
         time.sleep(count)
 
-        function(*args)
+        if args is not None:
+            function(*args)
+        else:
+            function()
 
     threading.Thread(target=wait, args=[function, count, unit_type, args], daemon=not keep_open).start()
 

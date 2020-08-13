@@ -328,16 +328,20 @@ class ranker:
     def __init__(self):
         pass
 
-    def rank(self, in1, data, key="phrase"):
+    def rank(self, in1, data, key="phrase", add_points_key=None):
         all_points = 0
 
         for item in data:
             points = 0
             try:
                 phrase = item['phrase']
+                if add_points_key is not None:
+                    points += item[add_points_key]
             except:
-                print("Error on structure.")
+                print("Error on structure-")
                 print("ranker uses list of dict - [{'key': '.....'}, {'key..}]")
+                if add_points_key is not None:
+                    print("ensure", add_points_key, "is in dict")
                 raise SyntaxError("Structe Error")
 
             if phrase == in1:

@@ -11,7 +11,6 @@ class weights:
 
 class reason:
     
-
     def __init__(self):
         self.decay = 1
         self.weights = weights()
@@ -323,3 +322,67 @@ class reason:
                     return self.word_to_phrase(in1, in2)
                 else:
                     return self.compare_words(in1, in2)
+
+
+class ranker:
+    def __init__(self):
+        pass
+
+    def rank(self, in1, data, key="phrase"):
+        all_points = 0
+
+        for item in data:
+            points = 0
+            try:
+                phrase = item['phrase']
+            except:
+                print("Error on structure.")
+                print("ranker uses list of dict - [{'key': '.....'}, {'key..}]")
+                raise SyntaxError("Structe Error")
+
+            if phrase == in1:
+                points += 7
+
+            points += phrase.count(in1)*2
+            points += in1.count(phrase)
+
+
+            if " " in in1:
+                for word in in1.split(" "):
+                    points += phrase.count(word)*2
+                    
+
+            if " " in phrase:
+                for word in phrase.split(" "):
+                    points += in1.count(word)
+                    
+
+            points += phrase.lower().count(in1.lower())
+            points += in1.lower().count(phrase.lower())
+
+
+            if " " in in1:
+                for word in in1.lower().split(" "):
+                    points += phrase.lower().count(word)*2
+                    
+
+            if " " in phrase:
+                for word in phrase.lower().split(" "):
+                    points += in1.lower().count(word)
+
+            if points > 0:
+                dist = abs(len(in1) - len(phrase))
+                len_score = ((1/1.15)**(0.75*dist))*2
+
+                points += len_score
+
+            all_points += points
+            item['ranker_points'] = points
+
+        for item in data:
+            item['score'] = item['ranker_points']/all_points
+
+        data = sorted(data, key = lambda i: i['score'])
+        data.reverse()
+
+        return data

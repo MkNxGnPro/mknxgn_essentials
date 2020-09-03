@@ -1,5 +1,7 @@
 import json, base64, os
 import tarfile
+import threading
+import time
 
 workingDir = False
 
@@ -160,6 +162,35 @@ def write_csv(path, data):
         strs += ",".join(items)
         strs += "\n"
     write_file(path, strs)
+
+
+__busy_files__ = {}
+def __biz_File__(path, data=None, append_txt=False):
+    global __busy_files__
+    if path not in __busy_files__:
+        __busy_files__[path] = False
+    while __busy_files__[path] == True:
+        time.sleep(0.01)
+    __busy_files__[path] = True
+    if data is not None:
+        if append_txt:
+            write_file(path, data, True)
+        else:
+            write_json(path, data)
+        __busy_files__[path] = False
+        return
+    if append_txt:
+        try:
+            data = read_file(path)
+        except:
+            data = ""
+    else:
+        try:
+            data = read_json(path)
+        except:
+            data = {}
+    __busy_files__[path] = False
+    return data
 
 class Updating_Dict_File(dict):
 

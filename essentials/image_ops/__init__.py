@@ -2,6 +2,7 @@ from io import BytesIO
 from PIL import Image
 import cv2
 import numpy as np
+import base64
 
 
 def cv2_to_pil(cv2_img):
@@ -23,3 +24,24 @@ def pil_to_memory_file(pil_img):
     pil_img.save(img_io, 'JPEG')
     img_io.seek(0)
     return img_io
+
+def base64_to_pil(base64_str=None, base64_bytes=None):
+    if not base64:
+        raise ImportError("Base64 was never found, please install it to use this feature")
+    img_io = BytesIO()
+    if base64_str is not None:
+        img_io.write(base64.decodebytes(base64_str.encode()))
+    else:
+        img_io.write(base64.decodebytes(base64_bytes))
+    img_io.seek(0)
+    pil_img = Image.open(img_io)
+    return pil_img
+
+def pil_to_base64(pil_image):
+    buffered = BytesIO()
+    pil_image.save(buffered, format="JPEG")
+    buffered.seek(0)
+    return base64.b64encode(buffered.getvalue())
+
+def cv2_convert_to_gray(img):
+    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

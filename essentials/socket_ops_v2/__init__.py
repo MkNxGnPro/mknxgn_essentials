@@ -408,7 +408,6 @@ class Socket_Server_Client:
             self.socket.close()
         except:
             pass
-        
 
     def send(self, data):
         """
@@ -453,11 +452,13 @@ class Socket_Server_Client:
         tok = essentials.CreateToken(20, self.__ask_list__)
         self.__ask_list__[tok] = False
         self.send({"function_ask_question": tok, "data": data})
-        while self.__ask_list__[tok] == False:
+        while self.__ask_list__[tok] == False and self.running == True:
             time.sleep(0.01)
             timeout -= 0.01
             if timeout <= 0:
                 raise TimeoutError("No response within time.")
+        if self.__ask_list__[tok] == False and self.running == False:
+            raise ConnectionError("We've been disconnected while waiting for a response")
         copyed = copy.deepcopy(self.__ask_list__[tok])
         del self.__ask_list__[tok]
         return copyed['data']
@@ -468,7 +469,6 @@ class Socket_Server_Client:
         while self.__get_next__ == True:
             time.sleep(0.05)
         return self.get_next_data
-
 
     def __data_rev__(self):
         """
@@ -682,11 +682,13 @@ class Socket_Connector:
         tok = essentials.CreateToken(20, self.__ask_list__)
         self.__ask_list__[tok] = False
         self.send({"function_ask_question": tok, "data": data})
-        while self.__ask_list__[tok] == False:
+        while self.__ask_list__[tok] == False and self.running == True:
             time.sleep(0.01)
             timeout -= 0.01
             if timeout <= 0:
                 raise TimeoutError("No response within time.")
+        if self.__ask_list__[tok] == False and self.running == False:
+            raise ConnectionError("We've been disconnected while waiting for a response")
         copyed = copy.deepcopy(self.__ask_list__[tok])
         del self.__ask_list__[tok]
         return copyed['data']

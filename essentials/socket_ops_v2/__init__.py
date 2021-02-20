@@ -628,7 +628,7 @@ class Socket_Connector:
         on_data_recv (:obj:`def`): Holds the function you specified to use, can be over written.
 
         """
-        self.running = True
+        self.running = False
         self.HOST = HOST
         self.PORT = PORT
         self.recv_data = b""
@@ -873,7 +873,6 @@ class UDP_Server(object):
             self.socket.close()
         except:
             pass
-
 
 class UDP_Connector(object):
 

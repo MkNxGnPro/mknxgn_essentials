@@ -559,7 +559,6 @@ class Socket_Question(object):
     def answer(self, data):
         self.questioner.send({"function_ask_response": self.__answer_token__, "data": data})
 
-
 class Configuration(object):
 
     def __init__(self, default=PYTHONIC, on_data_recv=None, on_question=None, on_connection_close=None):
@@ -605,7 +604,6 @@ class Configuration(object):
             self.client_type = "legacy"
         else:
             raise ValueError("Setting value must be True")
-
 
 class Socket_Connector:
 
@@ -654,6 +652,7 @@ class Socket_Connector:
         if self.configuration.WEBONIC:
             raise NotImplementedError("Websocket Clients Haven't been Implemented Yet.")
         self.socket = ConnectorSocket(self.HOST, self.PORT, timeout)
+        self.running = True
         if self.configuration.PYTHONIC == True:
             self.send({"pythonic": True})
             if self.configuration.server_PYTHONIC_only == False:

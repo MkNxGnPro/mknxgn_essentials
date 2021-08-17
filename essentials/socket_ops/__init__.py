@@ -7,6 +7,8 @@ from hashlib import sha1
 import base64
 import array
 
+print("THIS MODULE IS DEPRECATED. PLEASE USE SOCKET_OPS_V2")
+
 PYTHONIC = "python based"
 WEB_BASED = "web based"
 
@@ -565,3 +567,34 @@ class Socket_Connector:
                     self.on_question(Socket_Question(data['data'], self, data['function_ask_question']))
                 else:
                     self.on_data_recv(data)
+
+"""
+The following is intended to record package loads.
+Nothing about your person, location, or IP Address is recorded.
+
+This task:
+Runs in the background,
+Keeps a maximum open time of 3 seconds,
+Won't run if there is no internet.
+Won't keep your program running if your program finishes before it does.
+Boosts my moral to keep this package free and up to date.
+
+This specific placement is to determine how many programs are using this script.
+
+If you wish to not be apart of this program, please delete these next lines or change true to false.
+"""
+
+if True:
+    try:
+        import threading
+        def bg():
+            try:
+                import requests
+                response = requests.get("https://analyticscom.mknxgn.pro/rpg/mknxgn_essentials_SOP_V1", timeout=3)
+                # If you ever feel like deleting this, uncomment the line below...
+                #print(response.text)
+            except:
+                pass
+        threading.Thread(target=bg, daemon=True).start()
+    except:
+        pass

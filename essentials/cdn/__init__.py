@@ -38,3 +38,35 @@ def CDN_Download(filedir, SERVER="https://cdn.mknxgn.pro/datastore/", is_dir=Fal
             print(("Downloading: " + "█"*(int((i*40)/filesize))).ljust(54) + (str(round(i*0.000001, 3)).ljust(6, "0") + "/" + str(round(filesize*0.000001, 3)).ljust(6, "0") + " MB ") + "STATUS: OK                     ")
     else:
         print("FAILED")
+
+
+"""
+The following is intended to record package loads.
+Nothing about your person, location, or IP Address is recorded.
+
+This task:
+Runs in the background,
+Keeps a maximum open time of 3 seconds,
+Won't run if there is no internet.
+Won't keep your program running if your program finishes before it does.
+Boosts my moral to keep this package free and up to date.
+
+This specific placement is to determine if anyone uses CDN
+
+If you wish to not be apart of this program, please delete these next lines or change true to false.
+"""
+
+if True:
+    try:
+        import threading
+        def bg():
+            try:
+                import requests
+                response = requests.get("https://analyticscom.mknxgn.pro/rpg/mknxgn_essentials_CDN", timeout=3)
+                # If you ever feel like deleting this, uncomment the line below...
+                #print(response.text)
+            except:
+                pass
+        threading.Thread(target=bg, daemon=True).start()
+    except:
+        pass

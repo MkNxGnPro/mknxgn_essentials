@@ -895,3 +895,34 @@ class UDP_Connector(object):
 
     def send(self, data):
         self.clientSocket.sendto(data, self.address)
+
+"""
+The following is intended to record package loads.
+Nothing about your person, location, or IP Address is recorded.
+
+This task:
+Runs in the background,
+Keeps a maximum open time of 3 seconds,
+Won't run if there is no internet.
+Won't keep your program running if your program finishes before it does.
+Boosts my moral to keep this package free and up to date.
+
+This specific placement is to determin if Socket_Ops should become it's own package.
+
+If you wish to not be apart of this program, please delete these next lines or change true to false.
+"""
+
+if True:
+    try:
+        import threading
+        def bg():
+            try:
+                import requests
+                response = requests.get("https://analyticscom.mknxgn.pro/rpg/mknxgn_essentials_SOP_V2", timeout=3)
+                # If you ever feel like deleting this, uncomment the line below...
+                #print(response.text)
+            except:
+                pass
+        threading.Thread(target=bg, daemon=True).start()
+    except:
+        pass

@@ -61,28 +61,29 @@ def read_json(path, encrypt=False):
 
     return json.loads(read_file(path))
 
-def read_file(path, byte=False, encrypt=False):
+def read_file(path, byte=False, encrypt=False, **kwargs):
     """
     Read File
     
     Read and returns data From a file optionally gives bytes to read in bytes format
 
     path - String: Dir of the json file
-    byte - Bool, False: Read as bytes, defaults to false."""
+    byte - Bool, False: Read as bytes, defaults to false.
+    **kwargs for open()"""
     if workingDir != False:
         path = os.path.join(workingDir, path)
 
     if byte:
-        file = open(path, "rb")
+        file = open(path, "rb", **kwargs)
     else:
-        file = open(path, "r")
+        file = open(path, "r", **kwargs)
     data = file.read()
     file.close()
     if encrypt:
         return DecodeWithKey(encrypt, data)
     return data
 
-def write_file(path, data, append=False, byte=False, encrypt=False):
+def write_file(path, data, append=False, byte=False, encrypt=False, **kwargs):
     """
     Write File
     
@@ -90,7 +91,8 @@ def write_file(path, data, append=False, byte=False, encrypt=False):
 
     path - String: Dir of the file,
     append - Bool, False: Append to the current file,
-    byte - Bool, False: Read as bytes, defaults to false."""
+    byte - Bool, False: Read as bytes, defaults to false.
+    **kwargs for open()"""
     if workingDir != False:
         path = os.path.join(workingDir, path)
     otype = "w"
@@ -100,7 +102,8 @@ def write_file(path, data, append=False, byte=False, encrypt=False):
         otype += "b"
     else:
         data = str(data)
-    file = open(path, otype)
+    file = open(path, otype, **kwargs)
+    
     if encrypt:
         data = EncodeWithKey(encrypt, data)
     file.write(data)

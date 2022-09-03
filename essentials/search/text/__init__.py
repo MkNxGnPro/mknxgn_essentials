@@ -214,13 +214,13 @@ class reason:
             i += 1
 
         case['score'] += (by_order/len(longest.split(" "))) * self.weights.by_order
-        case['tests'] += 1
+        case['tests'] += self.weights.by_order
 
         case['score'] += (matches/len(longest.split(" "))) * self.weights.by_match
-        case['tests'] += 1
+        case['tests'] += self.weights.by_match
 
         case['score'] += (x_match/len(longest.split(" "))) * self.weights.by_match
-        case['tests'] += 1
+        case['tests'] += self.weights.by_match
 
         matches = 0
         x_match = 0
@@ -244,21 +244,23 @@ class reason:
             i += 1
         
         case['score'] += (by_order/len(longest.split(" "))) * self.weights.by_order
-        case['tests'] += 1
+        case['tests'] += self.weights.by_order
 
         case['score'] += (matches/len(longest.split(" "))) * self.weights.by_match
-        case['tests'] += 1
+        case['tests'] += self.weights.by_match
 
         case['score'] += (x_match/len(longest.split(" "))) * self.weights.by_match
-        case['tests'] += 1
+        case['tests'] += self.weights.by_match
         
         
+        by_length = 0
+
         dist = abs(len(phrase1) - len(phrase2))
         score = (1/1.15)**(0.75*dist)
 
         case['by_length'] = score
         case['score'] += (score * self.weights.by_length)
-        case['tests'] += 1
+        case['tests'] += self.weights.by_length
 
 
         case['score'] = case['score']/case['tests']
@@ -320,6 +322,7 @@ class reason:
                     return self.word_to_phrase(in1, in2)
                 else:
                     return self.compare_words(in1, in2)
+
 
 class ranker:
     def __init__(self):
@@ -387,22 +390,3 @@ class ranker:
         data.reverse()
 
         return data
-
-def searchEngine_Phrase(phrase:str, possibleResults:dict):
-    """
-        How to use.
-
-        params
-            phrase - str
-            possibleResults - dict: {"KEY": match phrase OR [match phrase array]]}
-
-        Will score each result based on the search phrase and possible result.
-
-        Returns a dict of {"KEY": SCORE:float} sorted by score. 
-    """
-    results = {}
-    engine = reason()
-    for key in possibleResults:
-        caseResults = engine.auto(phrase, possibleResults[key])
-        print(caseResults)
-        

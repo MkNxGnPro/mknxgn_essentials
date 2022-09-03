@@ -1,4 +1,5 @@
 import struct, socket, threading, json, os, pickle
+from typing import Union, List, Dict
 from essentials import tokening
 import essentials
 import copy
@@ -12,44 +13,84 @@ PYTHONIC = "python based"
 WEBONIC = "web based"
 LEGACY = "legacy"
 
-def SocketDownload(sock, data, usage=None):
-    """
-        Helper function for Socket Classes
-    """
-    try:
-        payload_size = struct.calcsize(">L")
-        while len(data) < payload_size:
-            data += sock.recv(4096)
-        packed_msg_size = data[:payload_size]
-        data = data[payload_size:]
-        msg_size = struct.unpack(">L", packed_msg_size)[0]
-        while len(data) < msg_size:
-            data += sock.recv(4096)
-        frame_data = data[:msg_size]
-        data = data[msg_size:]
-        if usage != None:
-            usage.add(len(frame_data))
-        try:
-            xData = pickle.loads(frame_data, fix_imports=True, encoding="bytes")
-            return xData, data
-        except:
-            print("EOF Error Caught.")
-    except Exception as e:
-        raise ConnectionError("Connection Error:", e)
+class socketMessageTransport:
+    def __init__(self, controller, sock:socket.socket, useMeter=None):
+        self.controller:Union[Socket_Server_Client, Socket_Connector] = controller
+        self.usage:Transfer_Record = useMeter
+        self.pendingMessages = []
+        self.socket:socket.socket = sock
+        self.buffer = b""
+        self.frameInfoSize = struct.calcsize(">L")
+        self.fixImports = True
+        self.outbound = []
+        threading.Thread(target=self.__download__, daemon=True).start()
+        threading.Thread(target=self.__upload__, daemon=True).start()
 
-def SocketUpload(sock, data, usage=None):
-    """
-        Helper function for Socket Classes
-    """
-    try:
-        data = pickle.dumps(data, 0)
-        frame = struct.pack(">L", len(data)) + data
-        if usage != None:
-            usage.add(len(frame))
-        sock.sendall(frame)
-    except:
-        raise ConnectionError("Connection Error")
 
+    def sendMessage(self, message):
+        self.outbound.append(message)
+
+    @property
+    def firstPendingMessage(self):
+        while self.pendingMessages.__len__() < 1:
+            time.sleep(0.01)
+        return self.pendingMessages.pop(0)
+
+    def __upload__(self):
+        while self.controller.running:
+            try:
+                while self.outbound.__len__() <= 0:
+                    time.sleep(0.1)
+                message = self.outbound.pop(0)
+                data = pickle.dumps(message, 0, fix_imports=self.fixImports)
+                frame = struct.pack(">L", len(data)) + data
+                if self.usage != None:
+                    self.usage.sent.add(len(frame))
+                self.socket.sendall(frame)
+            except:
+                self.controller.shutdown()
+            time.sleep(0.01)
+
+    def __download__(self):
+        while self.controller.running:
+            # Download the inital frame size
+            while len(self.buffer) < self.frameInfoSize and self.controller.running:
+                try:
+                    self.buffer += self.socket.recv(self.frameInfoSize)
+                except ConnectionResetError:
+                    self.controller.shutdown()
+                    return
+                except socket.timeout as e:
+                    pass
+
+            if self.controller.running == False:
+                return 
+            
+            packed_msg_size = self.buffer[:self.frameInfoSize]
+            self.buffer = self.buffer[self.frameInfoSize:]
+
+            msg_size = struct.unpack(">L", packed_msg_size)[0]
+            while len(self.buffer) < msg_size and self.controller.running:
+                try:
+                    self.buffer += self.socket.recv(msg_size - len(self.buffer)) 
+                except ConnectionResetError:
+                    self.controller.shutdown()
+                    return 
+
+            if self.controller.running == False:
+                return         
+
+            frame = self.buffer[:msg_size]
+            self.buffer = self.buffer[msg_size:]
+            if self.usage != None:
+                self.usage.received.add(len(frame))
+            try:
+                message = pickle.loads(frame, fix_imports=self.fixImports, encoding="bytes")
+                self.pendingMessages.append(message)
+            except EOFError as e:
+                print("EOF Error Caught.")
+                print(e)
+            
 def Encode_WebSocket_Message(data="", mask=0):
     if isinstance(data, six.text_type):
         data = data.encode('utf-8')
@@ -301,7 +342,7 @@ class Socket_Server_Client:
 
     def __init__(self, sock, addr, server, conID, on_connection_open, on_data, on_question, on_close, Heart_Beat=True, Heart_Beat_Wait=20, legacy_buffer_size=1024, PYTHONIC_only=False):
         """CLIENT for Socket_Server_Host"""
-        self.socket = sock
+        self.socket:socket.socket = sock
         self.addr = addr
         self.server = server
         self.conID = conID
@@ -309,7 +350,6 @@ class Socket_Server_Client:
         self.on_close = on_close
         self.running = True
         self.meta = {}
-        self.recv_data = b""
         self.data_usage = Transfer_Record()
         self.client_type = None
         self.on_question = on_question
@@ -320,25 +360,24 @@ class Socket_Server_Client:
         self.heart_beat_wait = Heart_Beat_Wait
         self.heart_beat = Heart_Beat
         self.PYTHONIC_only = PYTHONIC_only
+        self.pendingQuestions:Dict[str, Socket_Question] = {}
         if PYTHONIC_only:
             self.client_type = PYTHONIC
-            threading.Thread(target=on_connection_open, args=[self]).start()
+            self.dataManager = socketMessageTransport(self, self.socket, self.data_usage)
             threading.Thread(target=self.__data_rev__, daemon=True).start()
             if self.heart_beat == True:
                 self.socket.setblocking(1)
                 threading.Thread(target=self.__heart_beat__, daemon=True).start()
+            threading.Thread(target=on_connection_open, args=[self]).start()
         else:
             threading.Thread(target=self.__detect_client_type__, args=[on_connection_open]).start()
 
     def __detect_client_type__(self, on_open):
-        self.socket.settimeout(2)
-        while True:
-            try:
-                self.recv_data += self.socket.recv(2)
-            except:
-                break
+        firstMessage = self.dataManager.firstPendingMessage
+        if type(firstMessage) != bytes:
+            firstMessage = str(firstMessage).encode()
 
-        if b"PING" in self.recv_data[:7]:
+        if b"PING" in firstMessage:
             try:
                 self.socket.send(b"PONG")
             except:
@@ -346,10 +385,10 @@ class Socket_Server_Client:
             self.shutdown()
             return
 
-        if b"permessage-deflate" in self.recv_data:
+        if b"permessage-deflate" in firstMessage:
             self.client_type = WEBONIC
             GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
-            msg = self.recv_data.decode("utf-8")
+            msg = firstMessage.decode("utf-8")
             vals = msg.replace("\r", "").split("\n")
             headers = {}
             for item in vals:
@@ -369,7 +408,7 @@ class Socket_Server_Client:
             response = '\r\n'.join(websocket_answer).format(key=response_key)
             self.socket.send(response.encode('utf-8'))
             self.socket.settimeout(0.5)
-        elif b"pythonic" in self.recv_data:
+        elif b"pythonic" in firstMessage:
             self.client_type = PYTHONIC
         else:
             self.socket.settimeout(0.075)
@@ -429,8 +468,9 @@ class Socket_Server_Client:
         
         if self.client_type == PYTHONIC:
             try:
-                SocketUpload(self.socket, data, self.data_usage.sent)
-            except:
+                self.dataManager.sendMessage(data)
+            except Exception as e:
+                print("EXCEPTION:", e)
                 self.shutdown()
         elif self.client_type == WEBONIC:
             try:
@@ -480,8 +520,7 @@ class Socket_Server_Client:
         if self.client_type == PYTHONIC:
             while self.running:
                 try:
-                    data, temp = SocketDownload(self.socket, self.recv_data, self.data_usage.received)
-                    self.recv_data = temp
+                    data = self.dataManager.firstPendingMessage
                 except:
                     self.shutdown()
                     return
@@ -492,7 +531,9 @@ class Socket_Server_Client:
                 elif type(data) == type({}) and 'function_ask_response' in data:
                     self.__ask_list__[data['function_ask_response']] = data
                 elif type(data) == type({}) and 'function_ask_question' in data:
-                    threading.Thread(target=self.on_question, args=[Socket_Question(data['data'], self, data['function_ask_question'])], daemon=True).start()
+                    question = Socket_Question(data['data'], self, data['function_ask_question'])
+                    self.pendingQuestions[question.__answer_token__] = question
+                    threading.Thread(target=self.on_question, args=[question], daemon=True).start()
                 else:
                     if self.__get_next__ == True:
                         self.get_next_data = data
@@ -550,14 +591,19 @@ class Socket_Server_Client:
                         threading.Thread(target=self.on_data, args=[msg, self], daemon=True).start()
                 time.sleep(0.01)
 
-class Socket_Question(object):
+class Socket_Question:
     def __init__(self, data, client, tok):
         self.data = data
-        self.questioner = client
+        self.questioner:Union[Socket_Connector, Socket_Server_Client] = client
         self.__answer_token__ = tok
+        self.answered = False
     
     def answer(self, data):
         self.questioner.send({"function_ask_response": self.__answer_token__, "data": data})
+        self.answered = True
+
+    def __repr__(self) -> str:
+        return f"<Question: ID: {self.__answer_token__}, Answered: {self.answered}, {str(self.data)[:15]}>"
 
 class Configuration(object):
 
@@ -629,11 +675,11 @@ class Socket_Connector:
         self.running = False
         self.HOST = HOST
         self.PORT = PORT
-        self.recv_data = b""
         self.data_usage = Transfer_Record()
         self.__ask_list__ = {}
         self.__get_next__ = False
         self.configuration = Config
+        self.pendingQuestions:Dict[str, Socket_Question] = {}
 
     def get_next(self, timeout=30):
         self.__get_next__ = True
@@ -654,6 +700,7 @@ class Socket_Connector:
         self.socket = ConnectorSocket(self.HOST, self.PORT, timeout)
         self.running = True
         if self.configuration.PYTHONIC == True:
+            self.dataManager = socketMessageTransport(self, self.socket, self.data_usage)
             self.send({"pythonic": True})
             if self.configuration.server_PYTHONIC_only == False:
                 time.sleep(2)
@@ -666,14 +713,13 @@ class Socket_Connector:
         else:
             raise ValueError("No configuration values set.")
 
-        
         threading.Thread(target=self.__data_rev__, daemon=True).start()
 
     def __heart_beat__(self):
         while self.running:
-            self.send({"heart_beat_function": True})
             time.sleep(self.configuration.heart_beat_wait)
-
+            self.send({"heart_beat_function": True})
+            
     def ask(self, data, timeout=5):
         if self.configuration.PYTHONIC != True:
             print("ERROR: Can't ask questions to non-Pythonic connections")
@@ -705,7 +751,7 @@ class Socket_Connector:
             if self.configuration.LEGACY:
                 self.socket.sendall(data)
             elif self.configuration.PYTHONIC:
-                SocketUpload(self.socket, data, self.data_usage.sent)
+                self.dataManager.sendMessage(data)
             elif self.configuration.WEBONIC:
                 self.socket.send(data)
         except Exception as e:
@@ -760,16 +806,33 @@ class Socket_Connector:
         elif self.configuration.PYTHONIC:
             while self.running:
                 try:
-                    data, temp = SocketDownload(self.socket, self.recv_data, self.data_usage.received)
-                    self.recv_data = temp
+                    toDel = []
+                    for id in self.pendingQuestions:
+                        q = self.pendingQuestions[id]
+                        if q.answered:
+                            toDel.append(id)
+                    for id in toDel:
+                        del self.pendingQuestions[id]
                 except:
+                    pass
+                try:
+                    data = self.dataManager.firstPendingMessage
+                except ConnectionError as e:
+                    print(e.errno)
+                    print("shutting down", e)
+                    self.shutdown()
+                    raise e
+                except Exception as e:
+                    print("Error main", e)
                     continue
                 if type(data) == type({}) and 'heart_beat_function' in data:
                     pass
                 elif type(data) == type({}) and 'function_ask_response' in data:
                     self.__ask_list__[data['function_ask_response']] = data
                 elif type(data) == type({}) and 'function_ask_question' in data:
-                    self.configuration.on_question(Socket_Question(data['data'], self, data['function_ask_question']))
+                    question = Socket_Question(data['data'], self, data['function_ask_question'])
+                    self.pendingQuestions[question.__answer_token__] = question
+                    threading.Thread(target=self.configuration.on_question, args=[question], daemon=True).start()
                 else:
                     if self.__get_next__ == True:
                         self.get_next_data = data

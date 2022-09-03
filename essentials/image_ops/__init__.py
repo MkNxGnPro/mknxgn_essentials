@@ -17,11 +17,11 @@ def pil_to_cv2(pil_img):
         raise ImportError("PIL was never found during boot. Install Python Image Lib. to use this function")
     return cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
 
-def pil_to_memory_file(pil_img, format="JPEG"):
+def pil_to_memory_file(pil_img):
     if BytesIO == False:
         raise ImportError("BytesIO was never found, please install it to use this feature")
     img_io = BytesIO()
-    pil_img.save(img_io, format)
+    pil_img.save(img_io, 'JPEG')
     img_io.seek(0)
     return img_io
 
@@ -37,9 +37,9 @@ def base64_to_pil(base64_str=None, base64_bytes=None):
     pil_img = Image.open(img_io)
     return pil_img
 
-def pil_to_base64(pil_image, format="JPEG"):
+def pil_to_base64(pil_image):
     buffered = BytesIO()
-    pil_image.save(buffered, format=format)
+    pil_image.save(buffered, format="JPEG")
     buffered.seek(0)
     return base64.b64encode(buffered.getvalue())
 

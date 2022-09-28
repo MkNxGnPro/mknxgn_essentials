@@ -2,8 +2,76 @@ import json, base64, os
 import tarfile
 import threading
 import time
+from typing import Dict, List, Union
 
 workingDir = False
+
+def formatFileName(name:str, starter):
+    if starter != "":
+        return (starter + name[::-1].split(starter[::-1], 1)[0][::-1]).replace("\\", "/")
+    else:
+        return name.replace("\\", "/")
+
+class __fileInfo__:
+    def __init__(self, name, time, fullPath):
+        self.name = name
+        self.time = time
+        self.fullPath = fullPath
+        self.reason = ""
+        self.pair: Union[None, __fileInfo__] = None
+        self._td = 0
+    
+    @property
+    def timeDifference(self):
+        return self.time - self._td
+
+    @timeDifference.setter
+    def timeDifference(self, value):
+        self._td = value
+
+    def __repr__(self) -> str:
+        return f"<essentials.File Info Object, name: {self.name}>"
+
+
+def getFilesModifiedTime(dir, starter) -> Dict[str, __fileInfo__]:
+    current = {}
+    for dir, dirNames, fileNames in os.walk(dir):
+        for item in fileNames:
+            if "cpython-36.pyc" in item or "__pycache__" in item:
+                continue
+            file = os.path.join(dir, item)
+            data = os.stat(file)
+            name = formatFileName(file, starter)
+            current[name] = __fileInfo__(name, data.st_mtime, file)
+    return current
+
+
+class __fileChanges__:
+    def __init__(self, changed, files):
+        self.files:List[__fileInfo__] = files
+        self.changed = changed
+
+    def __repr__(self) -> str:
+        return f"<essentials.File Changes Object: Changes: {self.changed}, Count: {self.files.__len__()}>"
+
+def detectChanges(dir1, dir2, starter="") -> __fileChanges__:
+    past = getFilesModifiedTime(dir1, starter)
+    current = getFilesModifiedTime(dir2, starter)
+    return compareFilesModifedTime(past, current)
+
+def compareFilesModifedTime(past:Dict[str, __fileInfo__], current:Dict[str, __fileInfo__]) -> __fileChanges__:
+    pullFiles = []
+    for item in current:
+        if item not in past:
+            current[item].reason = "Created"
+            pullFiles.append(current[item])
+            continue
+        if current[item].time > past[item].time:
+            current[item].timeDifference = past[item].time
+            current[item].reason = "Modified"
+            current[item].pair = past[item]
+            pullFiles.append(current[item])
+    return __fileChanges__(pullFiles.__len__() > 0, pullFiles)
 
 def EncodeWithKey(key, string):
     """

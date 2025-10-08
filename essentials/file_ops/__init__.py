@@ -33,13 +33,15 @@ class __fileInfo__:
         return f"<essentials.File Info Object, name: {self.name}>"
 
 
-def getFilesModifiedTime(dir, starter) -> Dict[str, __fileInfo__]:
+def getFilesModifiedTime(dir, starter, ignore_paths:Union[None, list[str]]=None, default_ignores=['cpython-36.pyc', '__pycache__']) -> Dict[str, __fileInfo__]:
     current = {}
     for dir, dirNames, fileNames in os.walk(dir):
         for item in fileNames:
-            if "cpython-36.pyc" in item or "__pycache__" in item:
+            if any(ignore in item for ignore in (ignore_paths or default_ignores)):
                 continue
             file = os.path.join(dir, item)
+            if any(ignore in file for ignore in (ignore_paths or [])):
+                continue
             data = os.stat(file)
             name = formatFileName(file, starter)
             current[name] = __fileInfo__(name, data.st_mtime, file)
@@ -129,7 +131,7 @@ def read_json(path, encrypt=False):
 
     return json.loads(read_file(path))
 
-def read_file(path, byte=False, encrypt=False):
+def read_file(path, byte=False, encrypt=False, encoding="utf-8"):
     """
     Read File
     
@@ -143,14 +145,14 @@ def read_file(path, byte=False, encrypt=False):
     if byte:
         file = open(path, "rb")
     else:
-        file = open(path, "r")
+        file = open(path, "r", encoding=encoding)
     data = file.read()
     file.close()
     if encrypt:
         return DecodeWithKey(encrypt, data)
     return data
 
-def write_file(path, data, append=False, byte=False, encrypt=False):
+def write_file(path, data, append=False, byte=False, encrypt=False, encoding="utf-8"):
     """
     Write File
     
@@ -168,7 +170,10 @@ def write_file(path, data, append=False, byte=False, encrypt=False):
         otype += "b"
     else:
         data = str(data)
-    file = open(path, otype)
+    if byte:
+        file = open(path, otype)
+    else:
+        file = open(path, otype, encoding=encoding)
     if encrypt:
         data = EncodeWithKey(encrypt, data)
     file.write(data)

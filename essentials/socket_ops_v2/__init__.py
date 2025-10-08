@@ -360,6 +360,7 @@ class Socket_Server_Client:
         self.heart_beat_wait = Heart_Beat_Wait
         self.heart_beat = Heart_Beat
         self.PYTHONIC_only = PYTHONIC_only
+        self.dataManager = None
         self.pendingQuestions:Dict[str, Socket_Question] = {}
         if PYTHONIC_only:
             self.client_type = PYTHONIC
@@ -373,7 +374,15 @@ class Socket_Server_Client:
             threading.Thread(target=self.__detect_client_type__, args=[on_connection_open]).start()
 
     def __detect_client_type__(self, on_open):
-        firstMessage = self.dataManager.firstPendingMessage
+        if self.dataManager is not None:
+            firstMessage = self.dataManager.firstPendingMessage
+        else:
+            self.socket.settimeout(2)
+            try:
+                firstMessage = self.socket.recv(1042)
+            except:
+                firstMessage = b""
+
         if type(firstMessage) != bytes:
             firstMessage = str(firstMessage).encode()
 

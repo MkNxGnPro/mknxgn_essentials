@@ -1,4 +1,9 @@
-import netifaces
+try:
+    import netifaces
+except:
+    print("Error Loading Network Ops- Netifaces not installed")
+    print("pip install netifaces")
+    exit()
 import socket
 import time
 import threading

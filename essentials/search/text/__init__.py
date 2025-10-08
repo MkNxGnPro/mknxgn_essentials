@@ -390,3 +390,63 @@ class ranker:
         data.reverse()
 
         return data
+
+
+from typing import Union, List, Dict, Tuple
+from essentials import objects
+
+
+class search_engine_response_best_dict_best_dict(objects.baseObject):
+    def __init__(self, data:Dict={}):
+        self.score:float = 0
+        self.tests:int = 0
+        self.input:List[str] = []
+        self.by_order:List[float] = []
+        self.by_order_lowered:List[float] = []
+        self.by_letter:List[float] = []
+        self.by_length:float = 0
+        self.result:bool = False
+        self.update(data)
+
+
+class search_engine_response_best_dict(objects.baseObject):
+    def __init__(self, data:Dict={}):
+        self.score:float = 0
+        self.tests:int = 0
+        self.scores:List[float] = []
+        self.result:bool = False
+        self.input:List[str] = []
+        self.update(data)
+        self.best:search_engine_response_best_dict_best_dict = search_engine_response_best_dict_best_dict(data.get('best', {}))
+
+
+class search_engine_response_sorted_list__list_best_dict(objects.baseObject):
+    def __init__(self, data:Dict={}):
+        self.score:float = 0
+        self.tests:int = 0
+        self.input:List[str] = []
+        self.by_order:List[float] = []
+        self.by_order_lowered:List[float] = []
+        self.by_letter:List[float] = []
+        self.by_length:float = 0
+        self.result:bool = False
+        self.update(data)
+
+
+class search_engine_response_sorted_list(objects.baseObject):
+    def __init__(self, data:Dict={}):
+        self.score:float = 0
+        self.tests:int = 0
+        self.scores:List[float] = []
+        self.result:bool = False
+        self.input:List[str] = []
+        self.update(data)
+        self.best:search_engine_response_sorted_list__list_best_dict = search_engine_response_sorted_list__list_best_dict(data.get('best', {}))
+
+
+class search_engine_response(objects.baseObject):
+    def __init__(self, data:Dict={}):
+        self.input:List[str] = []
+        self.update(data)
+        self.best:search_engine_response_best_dict = search_engine_response_best_dict(data.get('best', {}))
+        self.sorted:List[search_engine_response_sorted_list] = [search_engine_response_sorted_list(x) for x in data.get('sorted', [])]
